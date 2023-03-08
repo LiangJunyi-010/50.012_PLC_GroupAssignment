@@ -8,7 +8,7 @@ int num_lines = 0;
 void strip(char *s) {
     char *p2 = s;
     while(*s != '\0') {
-        if(*s != '\t' && *s != '\n') {
+        if(*s != '\r' && *s != '\n' && *s != '\r\n') {
             *p2++ = *s++;
         } else {
             ++s;
@@ -33,18 +33,18 @@ char* csv_row_to_json(CsvRow *row) {
 int main(int argc, char *argv[]) {
     /* Check if file name was passed as argument*/
     if (argc != 3) {
-        printf("Usage: csv_to_json input_file.csv output_file.json\n");
+        printf("Input Format: csv_to_json.exe input_file.csv output_file.json\n");
         return 0;
     }
 
     /* Open CSV file*/
     FILE *csv_file = fopen(argv[1], "r");
     if (csv_file == NULL) {
-        printf("Error opening file %s\n", argv[1]);
+        printf("Wrong input file name\n");
         return 0;
     }
 
-    /* Count number of lines and columns in the file*/
+    /* Count number of lines and columns*/
     char c;
     while (!feof(csv_file)) {
         c = fgetc(csv_file);
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
     }
     rewind(csv_file);
 
-    /* Allocate memory for CSV rows*/
+    /* Create CSV rows*/
     CsvRow **rows = (CsvRow**) malloc(num_lines * sizeof(CsvRow*));
     for (int i = 0; i < num_lines; i++) {
         rows[i] = (CsvRow*) malloc(sizeof(CsvRow));
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    /* Parse CSV file and store data in CsvRows */
+    /* Store data in Rows */
     int row_index = 0;
     char **col_names = (char**) malloc(MAX_SIZE * sizeof(char*));
     char *line = (char*) malloc(MAX_SIZE * sizeof(char));
@@ -91,11 +91,12 @@ int main(int argc, char *argv[]) {
                 else{
                     result_line = strtok(NULL, ",");
                 }
-                /* get rid of \n */
-                if(col_index==num_columns-1){
+                /* Get rid of \n, use LF instead of CRLF*/
+                strip(result_line);
+                /*if(col_index==num_columns-1){
                     result_line[strlen(result_line) - 1] ='\0';
                     printf("%s\n",result_line);
-                }
+                }*/
                 col_names[col_index] = malloc(MAX_SIZE * sizeof(char));
                 strcpy(col_names[col_index],result_line);
                 col_index++;
@@ -111,11 +112,12 @@ int main(int argc, char *argv[]) {
                 else{
                     result_line = strtok(NULL, ",");
                 }
-                /* get rid of \n */
-                if(col_index==num_columns-1){
+                /* Get rid of \n use LF instead of CRLF*/
+                strip(result_line);
+                /*if(col_index==num_columns-1){
                     result_line[strlen(result_line) - 1] = '\0';
                     printf("%s\n",result_line);
-                }
+                }*/
                 strcpy(rows[row_index-1]->csv_data[col_index*2],col_names[col_index]);
                 strcpy(rows[row_index-1]->csv_data[col_index*2+1], result_line);
                 col_index++;
@@ -128,7 +130,7 @@ int main(int argc, char *argv[]) {
     /*Write into Json File*/
     FILE *json_file = fopen(argv[2], "w");
     fprintf(json_file, "[\n");
-    /*total nbum_lines -1*/
+    /*Total nbum_lines -1*/
     for (int i = 0; i < num_lines; i++) {
         fprintf(json_file, "%s", csv_row_to_json(rows[i]));
         if(i<num_lines-1){
