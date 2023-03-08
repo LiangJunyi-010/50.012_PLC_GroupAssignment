@@ -1,0 +1,22 @@
+
+
+{
+
+  "Class": "Student",
+  "Instance": "s1",
+  "Field1": "name",
+
+
+  "Value1": "John Tan",
+  "Field2": "id",
+
+  "Value2": 1001234,
+  "Field3": "email",
+  "Value3": "johntan@sutd.edu.sg",
+  "Field4": "gpa",
+  "Value4": 4.25,
+  "Test": true
+
+}
+
+
