@@ -5,13 +5,24 @@
 
 int num_columns = 0;
 int num_lines = 0;
+void strip(char *s) {
+    char *p2 = s;
+    while(*s != '\0') {
+        if(*s != '\t' && *s != '\n') {
+            *p2++ = *s++;
+        } else {
+            ++s;
+        }
+    }
+    *p2 = '\0';
+}
 char* csv_row_to_json(CsvRow *row) {
     char *json = (char*) malloc(MAX_SIZE * sizeof(char));
     sprintf(json, "\t{\n");
     for (int i = 0; i < num_columns; i++) {
         sprintf(json + strlen(json), "\t\t\"%s\" : \"%s\"", row->csv_data[i*2], row->csv_data[i*2+1]);
         if (i < num_columns - 1) {
-            sprintf(json + strlen(json), ",");
+            sprintf(json + strlen(json), ",");   
         }
         sprintf(json + strlen(json), "\n");
     }
@@ -73,8 +84,18 @@ int main(int argc, char *argv[]) {
         if(row_index==0){
             char *result_line;
             int col_index = 0;
-            result_line = strtok(line, ",");
             while (col_index<num_columns) {
+                if(col_index == 0){
+                    result_line = strtok(line, ",");
+                }
+                else{
+                    result_line = strtok(NULL, ",");
+                }
+                /* get rid of \n */
+                if(col_index==num_columns-1){
+                    result_line[strlen(result_line) - 1] ='\0';
+                    printf("%s\n",result_line);
+                }
                 col_names[col_index] = malloc(MAX_SIZE * sizeof(char));
                 strcpy(col_names[col_index],result_line);
                 col_index++;
@@ -83,8 +104,18 @@ int main(int argc, char *argv[]) {
         else{
             char *result_line;
             int col_index = 0;
-            result_line = strtok(line, ",");
             while (col_index<num_columns) {
+                if(col_index == 0){
+                    result_line = strtok(line, ",");
+                }
+                else{
+                    result_line = strtok(NULL, ",");
+                }
+                /* get rid of \n */
+                if(col_index==num_columns-1){
+                    result_line[strlen(result_line) - 1] = '\0';
+                    printf("%s\n",result_line);
+                }
                 strcpy(rows[row_index-1]->csv_data[col_index*2],col_names[col_index]);
                 strcpy(rows[row_index-1]->csv_data[col_index*2+1], result_line);
                 col_index++;
@@ -98,11 +129,13 @@ int main(int argc, char *argv[]) {
     FILE *json_file = fopen(argv[2], "w");
     fprintf(json_file, "[\n");
     /*total nbum_lines -1*/
-    for (int i = 0; i < num_lines-1; i++) {
+    for (int i = 0; i < num_lines; i++) {
         fprintf(json_file, "%s", csv_row_to_json(rows[i]));
-        fprintf(json_file, ",");
+        if(i<num_lines-1){
+            fprintf(json_file, ",\n");
+        }        
     }
-    fprintf(json_file, "]");
+    fprintf(json_file, "\n]");
     fclose(json_file);
 
     /*Free memory*/
