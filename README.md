@@ -1,4 +1,4 @@
-# 50.012_PLC_GroupAssignment
+# 50.051_PLC_GroupAssignment
 Programming Language Concept
 
 ## Group 12
