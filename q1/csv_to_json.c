@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
         if (c == '\n') {
             num_lines++;
             if (num_lines == 1) {
-                char *line = (char*) malloc(MAX_COL_SIZE * sizeof(char));
+                char *line = (char*) malloc(MAX_SIZE * sizeof(char));
                 fgets(line, MAX_SIZE, csv_file);
                 char *result_line;
                 result_line = strtok(line, ",");
@@ -116,6 +116,5 @@ int main(int argc, char *argv[]) {
         free(rows[i]);
     }
     free(rows);
-
     return 0;
 }
