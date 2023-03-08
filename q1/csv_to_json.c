@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
 
     /* Parse CSV file and store data in CsvRows */
     int row_index = 0;
-    char **col_names = (char**) malloc(MAX_SIZE * sizeof(char));
+    char **col_names = (char**) malloc(MAX_SIZE * sizeof(char*));
     char *line = (char*) malloc(MAX_SIZE * sizeof(char));
     while (fgets(line, MAX_SIZE, csv_file) != NULL) {
         if(row_index==0){
@@ -75,6 +75,7 @@ int main(int argc, char *argv[]) {
             int col_index = 0;
             result_line = strtok(line, ",");
             while (col_index<num_columns) {
+                col_names[col_index] = malloc(MAX_SIZE * sizeof(char));
                 strcpy(col_names[col_index],result_line);
                 col_index++;
             }
