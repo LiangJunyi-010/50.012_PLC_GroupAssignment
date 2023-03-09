@@ -85,8 +85,8 @@ int main(int argc, char *argv[]) {
             int col_index = 0;
             result_line = strtok(line, ",");
             while (col_index<num_columns) {
-                strcpy(rows[row_index]->csv_data[col_index*2],col_names[col_index]);
-                strcpy(rows[row_index]->csv_data[col_index*2+1], result_line);
+                strcpy(rows[row_index-1]->csv_data[col_index*2],col_names[col_index]);
+                strcpy(rows[row_index-1]->csv_data[col_index*2+1], result_line);
                 col_index++;
             }
         }  
