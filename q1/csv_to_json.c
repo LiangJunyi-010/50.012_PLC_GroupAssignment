@@ -8,7 +8,7 @@ int num_lines = 0;
 void strip(char *s) {
     char *p2 = s;
     while(*s != '\0') {
-        if(*s != '\r' && *s != '\n' && *s != '\r\n') {
+        if(*s != '\r' && *s != '\n') {
             *p2++ = *s++;
         } else {
             ++s;
