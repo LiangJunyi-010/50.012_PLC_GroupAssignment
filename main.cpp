@@ -34,7 +34,7 @@ struct Class {
     vector<Method> methods;
 };
 
-vector<string> split(string s, string delimiter) {
+vector<string> split(string s, const string& delimiter) {
     vector<string> tokens;
     size_t pos = 0;
     string token;
@@ -262,7 +262,7 @@ private:
             expect(":");
             JSONValue value = parse();
 
-            result.emplace(move(key), move(value));
+            result.emplace(std::move(key), std::move(value));
 
             if (getCurrentChar() == ',') {
                 ++index;
@@ -409,7 +409,7 @@ string generate_impl_file(JSONValue inJsonValue, ofstream &header_file, ofstream
     return outStr;
 }
 
-void generate_file(JSONValue inJsonValue, ofstream &header_file, ofstream &cpp_file, const string &fileName,
+void generate_file(const JSONValue& inJsonValue, ofstream &header_file, ofstream &cpp_file, const string &fileName,
                    const vector<string> &classStrings,
                    const vector<string> &visStrings,
                    const vector<string> &returnTypeStrings,
@@ -449,9 +449,9 @@ void generate_file(JSONValue inJsonValue, ofstream &header_file, ofstream &cpp_f
 
 
 int main() {
-    string fileName = "student";
-//    cout << "Input file name (without .json): ";
-//    cin >> fileName;
+    string fileName;
+    cout << "Input file name (without .json): ";
+    cin >> fileName;
     ifstream inJsonFile(fileName + ".json");
     string jsonString((istreambuf_iterator<char>(inJsonFile)), istreambuf_iterator<char>());
 
