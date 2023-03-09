@@ -12,15 +12,15 @@
     "Value4": 4.25
   },
   {
-    "Class": "Prof",
+    "Class": "Professor",
     "Instance": "p1",
-    "Field1": "profName",
-    "Value1": "Simon",
+    "Field1": "name",
+    "Value1": "SampleProf",
     "Field2": "title",
     "Value2": "Associate Prof",
     "Field3": "age",
-    "Value3": 114514,
+    "Value3": 30,
     "Field4": "rating",
-    "Value4": 4.25
+    "Value4": 8.88
   }
 ]

@@ -5,6 +5,7 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include <regex>
 
 using namespace std;
 enum class JSONValueType {
@@ -15,6 +16,36 @@ enum class JSONValueType {
     Array,
     Object
 };
+
+enum Visibility {
+    PUBLIC,
+    PRIVATE,
+    PROTECTED
+};
+
+struct Method {
+    string name;
+    string signature;
+    Visibility visibility;
+};
+
+struct Class {
+    string name;
+    vector<Method> methods;
+};
+
+vector<string> split(string s, string delimiter) {
+    vector<string> tokens;
+    size_t pos = 0;
+    string token;
+    while ((pos = s.find(delimiter)) != string::npos) {
+        token = s.substr(0, pos);
+        tokens.push_back(token);
+        s.erase(0, pos + delimiter.length());
+    }
+    tokens.push_back(s);
+    return tokens;
+}
 
 class JSONValue {
 public:
@@ -247,8 +278,29 @@ private:
     }
 };
 
+string removeWhitespace(const string &str) {
+    // Find the first non-whitespace character
+    size_t start = str.find_first_not_of(" \t\n\r");
+
+    // If there is no non-whitespace character, return an empty string
+    if (start == string::npos) {
+        return "";
+    }
+
+    // Find the last non-whitespace character
+    size_t end = str.find_last_not_of(" \t\n\r");
+
+    // Return the substring between the first and last non-whitespace characters
+    return str.substr(start, end - start + 1);
+}
+
 /* Generate the header file for a class */
-string generate_impl_file(JSONValue inJsonValue, ofstream &header_file, ofstream &cpp_file, const string &fileName) {
+string generate_impl_file(JSONValue inJsonValue, ofstream &header_file, ofstream &cpp_file,
+                          const vector<string> &classStrings,
+                          const vector<string> &visStrings,
+                          const vector<string> &returnTypeStrings,
+                          const vector<string> &mtdNameStrings,
+                          const vector<string> &mtdImplStrings) {
     string className = inJsonValue.objectValue["Class"].stringValue;
     /* write to header file */
     header_file << "class " << className << " {\n";
@@ -304,23 +356,65 @@ string generate_impl_file(JSONValue inJsonValue, ofstream &header_file, ofstream
         }
     }
     header_file << headerParamStr;
+
+    /* adding methods to .h */
+    string privateMtdStr;
+    string publicMtdStr;
+    string protectedMtdStr;
+    /* adding methods to .cpp */
+    string cppMtdStr;
+
+    for (int i = 0; i < classStrings.size(); i++) {
+        /* find all indexes of current class */
+        if (classStrings[i] == className) {
+            /* for cpp */
+            cppMtdStr += (returnTypeStrings[i] + " " + className + "::" + mtdNameStrings[i] + mtdImplStrings[i] + "\n");
+            /* for cpp */
+
+            /* check private vis */
+            const string &currVis = visStrings[i];
+            string currMtdStr = (returnTypeStrings[i] + " " + mtdNameStrings[i] + ";\n");
+            if (currVis == "private") {
+                /* add to privateMtdStr, later write to .h file */
+                privateMtdStr += currMtdStr;
+            } else if (currVis == "public") {
+                publicMtdStr += currMtdStr;
+            } else {
+                protectedMtdStr += currMtdStr;
+            }
+        }
+    }
+    header_file << privateMtdStr;
     header_file << "public:\n";
     header_file << className << "(";
 
     header_file << consParamStr;
     header_file << ");\n";
+    header_file << publicMtdStr;
+
+    header_file << "protected: \n";
+    header_file << protectedMtdStr;
+
     header_file << "};\n";
 
     cpp_file << consParamStr << ") {\n";
     cpp_file << consInitStr << "}\n";
 
-    string outStr = className + " " + inJsonValue.objectValue["Instance"].stringValue + " = " + className + "(" + objInstStr + ");\n";
+    /* adding methods to cpp */
+    cpp_file << cppMtdStr;
+
+    string outStr =
+            className + " " + inJsonValue.objectValue["Instance"].stringValue + " = " + className + "(" + objInstStr +
+            ");\n";
     return outStr;
 }
 
-void generate_file(JSONValue inJsonValue, ofstream &header_file, ofstream &cpp_file, const string &fileName) {
-
-    string className = inJsonValue.objectValue["Class"].stringValue;
+void generate_file(JSONValue inJsonValue, ofstream &header_file, ofstream &cpp_file, const string &fileName,
+                   const vector<string> &classStrings,
+                   const vector<string> &visStrings,
+                   const vector<string> &returnTypeStrings,
+                   const vector<string> &mtdNameStrings,
+                   const vector<string> &mtdImplStrings) {
     /* write to header file */
     string capFileName = fileName;
     transform(capFileName.begin(), capFileName.end(), capFileName.begin(), ::toupper);
@@ -336,10 +430,12 @@ void generate_file(JSONValue inJsonValue, ofstream &header_file, ofstream &cpp_f
 
     string mainStr;
     if (inJsonValue.arrayValue.empty()) {
-        mainStr += generate_impl_file(inJsonValue, header_file, cpp_file, fileName);
+        mainStr += generate_impl_file(inJsonValue, header_file, cpp_file,
+                                      classStrings, visStrings, returnTypeStrings, mtdNameStrings, mtdImplStrings);
     } else {
         for (const JSONValue &parsedJsonValue: inJsonValue.arrayValue) {
-            mainStr += generate_impl_file(parsedJsonValue, header_file, cpp_file, fileName);
+            mainStr += generate_impl_file(parsedJsonValue, header_file, cpp_file,
+                                          classStrings, visStrings, returnTypeStrings, mtdNameStrings, mtdImplStrings);
         }
     }
 
@@ -353,18 +449,51 @@ void generate_file(JSONValue inJsonValue, ofstream &header_file, ofstream &cpp_f
 
 
 int main() {
-    string fileName;
-    cout << "Input file name (without .json): ";
-    cin >> fileName;
-    ifstream inFile(fileName + ".json");
-    string jsonString((istreambuf_iterator<char>(inFile)), istreambuf_iterator<char>());
+    string fileName = "student";
+//    cout << "Input file name (without .json): ";
+//    cin >> fileName;
+    ifstream inJsonFile(fileName + ".json");
+    string jsonString((istreambuf_iterator<char>(inJsonFile)), istreambuf_iterator<char>());
+
+    ifstream inTxtFile(fileName + ".txt");
+    string txtString((istreambuf_iterator<char>(inTxtFile)), istreambuf_iterator<char>());
+
+    vector<string> splitStrings = split(txtString, "######\n");
+    splitStrings.erase(splitStrings.begin());
+    vector<string> classStrings;
+    vector<string> visStrings;
+    vector<string> returnTypeStrings;
+    vector<string> mtdNameStrings;
+    vector<string> mtdImplStrings;
+    for (int i = 0; i < splitStrings.size(); i += 2) {
+        string classVisString = splitStrings[i];
+        vector<string> classVisStrings = split(classVisString, " -");
+        string className = removeWhitespace(classVisStrings[0]);
+        string visibility = removeWhitespace(classVisStrings[1]);
+        classStrings.push_back(className);
+        visStrings.push_back(visibility);
+    }
+    for (int i = 1; i < splitStrings.size(); i += 2) {
+        string retTypeMtdNameImplString = splitStrings[i];
+        unsigned long splitIdx = retTypeMtdNameImplString.find('{');
+        string retTypeMtdNameString = removeWhitespace(retTypeMtdNameImplString.substr(0, splitIdx));
+        string mtdImplString = removeWhitespace(retTypeMtdNameImplString.substr(splitIdx));
+        /* separate return type and method name */
+        unsigned long splitIdx2 = retTypeMtdNameString.find(' ');
+        string returnType = retTypeMtdNameString.substr(0, splitIdx2);
+        string methodName = removeWhitespace(retTypeMtdNameString.substr(splitIdx2));
+        returnTypeStrings.push_back(returnType);
+        mtdNameStrings.push_back(methodName);
+        mtdImplStrings.push_back(mtdImplString);
+    }
 
     try {
         JSONParser parser(jsonString);
         JSONValue parsedJsonValue = parser.parse();
         ofstream header_file(fileName + ".h");
         ofstream cpp_file(fileName + ".cpp");
-        generate_file(parsedJsonValue, header_file, cpp_file, fileName);
+        generate_file(parsedJsonValue, header_file, cpp_file, fileName,
+                      classStrings, visStrings, returnTypeStrings, mtdNameStrings, mtdImplStrings);
     } catch (const exception &e) {
         cerr << "Failed to parse JSON string: " << e.what() << endl;
     }
