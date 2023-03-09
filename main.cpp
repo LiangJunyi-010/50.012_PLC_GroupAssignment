@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <fstream>
 #include <vector>
+#include <cmath>
 
 using namespace std;
 enum class JSONValueType {
@@ -245,91 +246,91 @@ private:
     }
 };
 
-// Helper function to determine the data type of a value
-string get_type(const string& value) {
-    if (value.empty()) {
-        return "string"; // empty values default to string
-    }
-    if (isdigit(value[0]) || (value[0] == '-' && isdigit(value[1]))) {
-        if (value.find('.') != string::npos) {
-            return "float";
-        }
-        return "int";
-    }
-    return "string";
-}
-
-// Generate the header file for a class
-void generate_header_file(const string& class_name, const vector<string>& member_names, ofstream& header_file) {
-    header_file << "#ifndef " << class_name << "_H\n";
-    header_file << "#define " << class_name << "_H\n";
+/* Generate the header file for a class */
+void generate_header_file(JSONValue inJsonValue, ofstream &header_file) {
+    header_file << "#ifndef " << inJsonValue.objectValue["Class"].stringValue << "_H\n";
+    header_file << "#define " << inJsonValue.objectValue["Class"].stringValue << "_H\n";
+    header_file << "#include <string>" << "\n";
     header_file << "using namespace std;\n";
-    header_file << "class " << class_name << " {\n";
+    header_file << "class " << inJsonValue.objectValue["Class"].stringValue << " {\n";
     header_file << "private:\n";
-    for (const auto& member_name : member_names) {
-        header_file << get_type("") << " " << member_name << ";\n";
-    }
-    header_file << "public:\n";
-    header_file << class_name << "(";
-    for (size_t i = 0; i < member_names.size(); i++) {
-        if (i > 0) {
-            header_file << ", ";
+    string upperString;
+    string lowerString;
+    unordered_map<string, JSONValue> jsonMap = inJsonValue.objectValue;
+    int count = 0;
+    for (std::pair<std::string, JSONValue> element: jsonMap) {
+        if (element.first.find("Field") != string::npos) {
+            string index = element.first.substr(5);
+            string valueKey = "Value" + index;
+            /* check value type */
+            JSONValue value = jsonMap[valueKey];
+
+            if (value.type == JSONValueType::String) {
+                upperString += ("string " + element.second.stringValue + ";\n");
+                lowerString += ("string " + element.second.stringValue);
+            } else if (value.type == JSONValueType::Number) {
+                if (ceil(value.numberValue) == floor(value.numberValue)) {
+                    upperString += ("int " + element.second.stringValue + ";\n");
+                    lowerString += ("int " + element.second.stringValue);
+                } else {
+                    upperString += ("float " + element.second.stringValue + ";\n");
+                    lowerString += ("float " + element.second.stringValue);
+                }
+            }
+            count++;
+            if (count != (jsonMap.size() - 2) / 2) {
+                lowerString += ", ";
+            }
+        } else if (element.first.find("Value") != string::npos) {
+            /* ignore */
+        } else {
+            cout << "not supported: " + element.first << "\n";
         }
-        header_file << get_type("") << " " << member_names[i];
     }
+    header_file << upperString;
+    header_file << "public:\n";
+    header_file << inJsonValue.objectValue["Class"].stringValue << "(";
+
+    header_file << lowerString;
     header_file << ");\n";
     header_file << "};\n";
     header_file << "#endif\n";
 }
 
 // Generate the implementation file for a class
-void generate_implementation_file(const string& class_name, const vector<string>& member_names, ofstream& implementation_file) {
-    implementation_file << "#include <iostream>\n";
-    implementation_file << "#include \"" << class_name << ".h\"\n";
-    implementation_file << "using namespace std;\n";
-    implementation_file << class_name << "::" << class_name << "(";
-    for (size_t i = 0; i < member_names.size(); i++) {
-        if (i > 0) {
-            implementation_file << ", ";
-        }
-        implementation_file << get_type("") << " " << member_names[i];
-    }
-    implementation_file << ")\n";
-    implementation_file << "{\n";
-    for (const auto& member_name : member_names) {
-        implementation_file << member_name << " = " << member_name << ";\n";
-    }
-    implementation_file << "}\n";
-}
+//void generate_implementation_file( JSONValue info, ofstream& implementation_file) {
+//    implementation_file << "#include <iostream>\n";
+//    implementation_file << "#include \"" << class_name << ".h\"\n";
+//    implementation_file << "using namespace std;\n";
+//    implementation_file << class_name << "::" << class_name << "(";
+//    for (size_t i = 0; i < member_names.size(); i++) {
+//        if (i > 0) {
+//            implementation_file << ", ";
+//        }
+//        implementation_file << get_type("") << " " << member_names[i];
+//    }
+//    implementation_file << ")\n";
+//    implementation_file << "{\n";
+//    for (const auto& member_name : member_names) {
+//        implementation_file << member_name << " = " << member_name << ";\n";
+//    }
+//    implementation_file << "}\n";
+//}
 
 int main() {
-	ifstream inFile("student.json");
-	string jsonString((istreambuf_iterator<char>(inFile)),istreambuf_iterator<char>());
+    ifstream inFile("student.json");
+    string jsonString((istreambuf_iterator<char>(inFile)), istreambuf_iterator<char>());
 
-	//    string jsonString = "{"name":"John","age":30,"city":"New York","married":false,"hobbies":["reading","coding","running"],"address":{"street":"123 Main St","city":"New York","zip":"10001"}}";
-	    try {
-	        JSONParser parser(jsonString);
-	        JSONValue value = parser.parse();
-	        if (value.type == JSONValueType::Object)     {
-	            cout << "here" << "\n";
-	        }
-	        if (value.objectValue["Value2"].type == JSONValueType::Number) {
-	            cout << "is number" << "\n";
-	        }
-	        cout << int(value.objectValue["Value2"].numberValue) << endl;
-
-	    } catch (const exception &e) {
-	        cerr << "Failed to parse JSON string: " << e.what() << endl;
-	    }
+    try {
+        JSONParser parser(jsonString);
+        JSONValue parsedJsonValue = parser.parse();
 
         ofstream header_file("student.h");
-//            if (!header_file) {
-//                cerr << "Error: could not open header file \"" << value.objectValue["Class"] << ".h\"" << endl;
-//            }
         ofstream implementation_file("student.cpp");
-//            if (!implementation_file) {
-//                cerr << "Error: could not open implementation file"<< value.objectValue["Class"] << ".cpp" << endl;
-//            }
-
-	    return 0;
+        generate_header_file(parsedJsonValue, header_file);
+    } catch (const exception &e) {
+        cerr << "Failed to parse JSON string: " << e.what() << endl;
     }
+
+    return 0;
+}
