@@ -353,8 +353,10 @@ void generate_file(JSONValue inJsonValue, ofstream &header_file, ofstream &cpp_f
 
 
 int main() {
-    ifstream inFile("student.json");
-    string fileName = "student";
+    string fileName;
+    cout << "Input file name (without .json): ";
+    cin >> fileName;
+    ifstream inFile(fileName + ".json");
     string jsonString((istreambuf_iterator<char>(inFile)), istreambuf_iterator<char>());
 
     try {
