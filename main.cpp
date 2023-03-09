@@ -4,6 +4,7 @@
 #include <fstream>
 #include <vector>
 #include <cmath>
+#include <algorithm>
 
 using namespace std;
 enum class JSONValueType {
@@ -247,15 +248,27 @@ private:
 };
 
 /* Generate the header file for a class */
-void generate_header_file(JSONValue inJsonValue, ofstream &header_file) {
-    header_file << "#ifndef " << inJsonValue.objectValue["Class"].stringValue << "_H\n";
-    header_file << "#define " << inJsonValue.objectValue["Class"].stringValue << "_H\n";
+void generate_impl_file(JSONValue inJsonValue, ofstream &header_file, ofstream &cpp_file, const string& fileName) {
+    string className = inJsonValue.objectValue["Class"].stringValue;
+    /* write to header file */
+    string capClassName = className;
+    transform(capClassName.begin(), capClassName.end(), capClassName.begin(), ::toupper);
+    header_file << "#ifndef " << capClassName << "_H\n";
+    header_file << "#define " << capClassName << "_H\n";
     header_file << "#include <string>" << "\n";
     header_file << "using namespace std;\n";
-    header_file << "class " << inJsonValue.objectValue["Class"].stringValue << " {\n";
+    header_file << "class " << className << " {\n";
     header_file << "private:\n";
-    string upperString;
-    string lowerString;
+    /* write to cpp file */
+    cpp_file << "#include <iostream>\n";
+    cpp_file << "#include \"" << fileName << ".h\"\n";
+    cpp_file << "using namespace std;\n";
+    cpp_file << className << "::" << className << "(";
+
+    string headerParamStr;
+    string consParamStr;
+    string consInitStr;
+    string objInstStr;
     unordered_map<string, JSONValue> jsonMap = inJsonValue.objectValue;
     int count = 0;
     for (std::pair<std::string, JSONValue> element: jsonMap) {
@@ -264,22 +277,30 @@ void generate_header_file(JSONValue inJsonValue, ofstream &header_file) {
             string valueKey = "Value" + index;
             /* check value type */
             JSONValue value = jsonMap[valueKey];
-
+            consInitStr += ("this->" + element.second.stringValue + " = " + element.second.stringValue + ";\n");
             if (value.type == JSONValueType::String) {
-                upperString += ("string " + element.second.stringValue + ";\n");
-                lowerString += ("string " + element.second.stringValue);
+                headerParamStr += ("string " + element.second.stringValue + ";\n");
+                consParamStr += ("string " + element.second.stringValue);
+                objInstStr += ("\"" + value.stringValue + "\"");
             } else if (value.type == JSONValueType::Number) {
                 if (ceil(value.numberValue) == floor(value.numberValue)) {
-                    upperString += ("int " + element.second.stringValue + ";\n");
-                    lowerString += ("int " + element.second.stringValue);
+                    headerParamStr += ("int " + element.second.stringValue + ";\n");
+                    consParamStr += ("int " + element.second.stringValue);
+                    objInstStr += (to_string(int(value.numberValue)));
                 } else {
-                    upperString += ("float " + element.second.stringValue + ";\n");
-                    lowerString += ("float " + element.second.stringValue);
+                    headerParamStr += ("float " + element.second.stringValue + ";\n");
+                    consParamStr += ("float " + element.second.stringValue);
+                    string numStr = to_string((value.numberValue));
+                    /* it won't trim 440.0 to 440. though it's not required (as 440 is int and checked above) */
+                    numStr.erase ( numStr.find_last_not_of('0') + 1, std::string::npos );
+                    numStr.erase ( numStr.find_last_not_of('.') + 1, std::string::npos );
+                    objInstStr += (numStr + "f");
                 }
             }
             count++;
             if (count != (jsonMap.size() - 2) / 2) {
-                lowerString += ", ";
+                consParamStr += ", ";
+                objInstStr += ", ";
             }
         } else if (element.first.find("Value") != string::npos) {
             /* ignore */
@@ -287,47 +308,35 @@ void generate_header_file(JSONValue inJsonValue, ofstream &header_file) {
             cout << "not supported: " + element.first << "\n";
         }
     }
-    header_file << upperString;
+    header_file << headerParamStr;
     header_file << "public:\n";
-    header_file << inJsonValue.objectValue["Class"].stringValue << "(";
+    header_file << className << "(";
 
-    header_file << lowerString;
+    header_file << consParamStr;
     header_file << ");\n";
     header_file << "};\n";
     header_file << "#endif\n";
-}
 
-// Generate the implementation file for a class
-//void generate_implementation_file( JSONValue info, ofstream& implementation_file) {
-//    implementation_file << "#include <iostream>\n";
-//    implementation_file << "#include \"" << class_name << ".h\"\n";
-//    implementation_file << "using namespace std;\n";
-//    implementation_file << class_name << "::" << class_name << "(";
-//    for (size_t i = 0; i < member_names.size(); i++) {
-//        if (i > 0) {
-//            implementation_file << ", ";
-//        }
-//        implementation_file << get_type("") << " " << member_names[i];
-//    }
-//    implementation_file << ")\n";
-//    implementation_file << "{\n";
-//    for (const auto& member_name : member_names) {
-//        implementation_file << member_name << " = " << member_name << ";\n";
-//    }
-//    implementation_file << "}\n";
-//}
+    cpp_file << consParamStr << ") {\n";
+    cpp_file << consInitStr << "}";
+    cpp_file << "int main(int argc, char *argv[]) {\n";
+    cpp_file << className << " " << inJsonValue.objectValue["Instance"].stringValue << " = "<< className << "(";
+    cpp_file << objInstStr << ");\n";
+    cpp_file << "return 0;\n}";
+}
 
 int main() {
     ifstream inFile("student.json");
+    string fileName = "student";
     string jsonString((istreambuf_iterator<char>(inFile)), istreambuf_iterator<char>());
 
     try {
         JSONParser parser(jsonString);
         JSONValue parsedJsonValue = parser.parse();
 
-        ofstream header_file("student.h");
-        ofstream implementation_file("student.cpp");
-        generate_header_file(parsedJsonValue, header_file);
+        ofstream header_file(fileName + ".h");
+        ofstream cpp_file(fileName + ".cpp");
+        generate_impl_file(parsedJsonValue, header_file, cpp_file, fileName);
     } catch (const exception &e) {
         cerr << "Failed to parse JSON string: " << e.what() << endl;
     }
