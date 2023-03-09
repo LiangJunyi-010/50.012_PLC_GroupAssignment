@@ -1,11 +1,26 @@
-{
-  "Class": "Student", "Instance": "s1",
-  "Field1": "name",
-  "Value1": "John Tan",
-  "Field2": "id",
-  "Value2": 1001234,
-  "Field3": "email",
-  "Value3": "johntan@sutd.edu.sg",
-  "Field4": "gpa",
-  "Value4": 4.25
-}
+[
+  {
+    "Class": "Student",
+    "Instance": "s1",
+    "Field1": "name",
+    "Value1": "John Tan",
+    "Field2": "id",
+    "Value2": 1001234,
+    "Field3": "email",
+    "Value3": "johntan@sutd.edu.sg",
+    "Field4": "gpa",
+    "Value4": 4.25
+  },
+  {
+    "Class": "Prof",
+    "Instance": "p1",
+    "Field1": "profName",
+    "Value1": "Simon",
+    "Field2": "title",
+    "Value2": "Associate Prof",
+    "Field3": "age",
+    "Value3": 114514,
+    "Field4": "rating",
+    "Value4": 4.25
+  }
+]
