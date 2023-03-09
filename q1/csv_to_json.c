@@ -18,8 +18,9 @@ void strip(char *s) {
 }
 char* csv_row_to_json(CsvRow *row) {
     char *json = (char*) malloc(MAX_SIZE * sizeof(char));
+    int i=0;
     sprintf(json, "\t{\n");
-    for (int i = 0; i < num_columns; i++) {
+    for ( i = 0; i < num_columns; i++) {
         sprintf(json + strlen(json), "\t\t\"%s\" : \"%s\"", row->csv_data[i*2], row->csv_data[i*2+1]);
         if (i < num_columns - 1) {
             sprintf(json + strlen(json), ",");   
@@ -31,6 +32,18 @@ char* csv_row_to_json(CsvRow *row) {
 }
 
 int main(int argc, char *argv[]) {
+    FILE *csv_file = fopen(argv[1], "r");
+    FILE *json_file = fopen(argv[2], "w");
+    /*CSV rows*/
+    int i=0;
+    int j =0;
+    /* Used for check \n to determin number of lines*/
+    char c;
+    int row_index = 0;
+    int col_index = 0;
+    char **col_names = (char**) malloc(MAX_SIZE * sizeof(char*));
+    char *line = (char*) malloc(MAX_SIZE * sizeof(char));
+    CsvRow** rows;
     /* Check if file name was passed as argument*/
     if (argc != 3) {
         printf("Input Format: csv_to_json.exe input_file.csv output_file.json\n");
@@ -38,22 +51,20 @@ int main(int argc, char *argv[]) {
     }
 
     /* Open CSV file*/
-    FILE *csv_file = fopen(argv[1], "r");
     if (csv_file == NULL) {
         printf("Wrong input file name\n");
         return 0;
     }
 
     /* Count number of lines and columns*/
-    char c;
     while (!feof(csv_file)) {
         c = fgetc(csv_file);
         if (c == '\n') {
             num_lines++;
             if (num_lines == 1) {
                 char *line = (char*) malloc(MAX_SIZE * sizeof(char));
-                fgets(line, MAX_SIZE, csv_file);
                 char *result_line;
+                fgets(line, MAX_SIZE, csv_file);
                 result_line = strtok(line, ",");
                 while (result_line != NULL) {
                     num_columns++;
@@ -64,26 +75,24 @@ int main(int argc, char *argv[]) {
         }
     }
     rewind(csv_file);
-
+    rows = (CsvRow**) malloc(num_lines * sizeof(CsvRow*));
     /* Create CSV rows*/
-    CsvRow **rows = (CsvRow**) malloc(num_lines * sizeof(CsvRow*));
-    for (int i = 0; i < num_lines; i++) {
+    for (i = 0; i < num_lines; i++) {
         rows[i] = (CsvRow*) malloc(sizeof(CsvRow));
         rows[i]->csv_data = (char**) malloc(num_columns * 2 * sizeof(char*));
-        for (int j = 0; j < num_columns; j++) {
+        for (j = 0; j < num_columns; j++) {
             rows[i]->csv_data[j*2] = (char*) malloc(MAX_SIZE * sizeof(char));
             rows[i]->csv_data[j*2+1] = (char*) malloc(MAX_SIZE * sizeof(char));
         }
     }
 
     /* Store data in Rows */
-    int row_index = 0;
-    char **col_names = (char**) malloc(MAX_SIZE * sizeof(char*));
-    char *line = (char*) malloc(MAX_SIZE * sizeof(char));
+   
     while (fgets(line, MAX_SIZE, csv_file) != NULL) {
+        /* if the first line, record the names of columns*/
         if(row_index==0){
             char *result_line;
-            int col_index = 0;
+            col_index = 0;
             while (col_index<num_columns) {
                 if(col_index == 0){
                     result_line = strtok(line, ",");
@@ -104,7 +113,7 @@ int main(int argc, char *argv[]) {
         }
         else{
             char *result_line;
-            int col_index = 0;
+            col_index = 0;
             while (col_index<num_columns) {
                 if(col_index == 0){
                     result_line = strtok(line, ",");
@@ -128,10 +137,9 @@ int main(int argc, char *argv[]) {
     fclose(csv_file);
 
     /*Write into Json File*/
-    FILE *json_file = fopen(argv[2], "w");
     fprintf(json_file, "[\n");
     /*Total nbum_lines -1*/
-    for (int i = 0; i < num_lines; i++) {
+    for (i = 0; i < num_lines; i++) {
         fprintf(json_file, "%s", csv_row_to_json(rows[i]));
         if(i<num_lines-1){
             fprintf(json_file, ",\n");
@@ -143,8 +151,8 @@ int main(int argc, char *argv[]) {
     /*Free memory*/
     free(col_names);
     free(line);
-    for (int i = 0; i < num_lines; i++) {
-        for (int j = 0; j < num_columns; j++) {
+    for (i = 0; i < num_lines; i++) {
+        for (j = 0; j < num_columns; j++) {
             free(rows[i]->csv_data[j*2]);
             free(rows[i]->csv_data[j*2+1]);
         }
