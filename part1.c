@@ -39,6 +39,7 @@ int main(int argc, char *argv[]) {
     /*CSV rows*/
     int i = 0;
     int j = 0;
+
     /* Used for check \n to determin number of lines*/
     char c;
     int row_index = 0;
@@ -89,7 +90,6 @@ int main(int argc, char *argv[]) {
     }
 
     /* Store data in Rows */
-
     while (fgets(line, MAX_SIZE, csv_file) != NULL) {
         /* if the first line, record the names of columns*/
         if (row_index == 0) {
