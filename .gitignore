@@ -2,10 +2,7 @@ cmake-build-debug
 CMakeLists.txt
 .idea
 a.out
-q1/out.json
-q1/csv_to_json.exe
-q1/csv_to_json.exe.stackdump
-q1/csv_to_json
+csv_to_json
 
 student.cpp
 student.h

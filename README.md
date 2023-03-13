@@ -8,3 +8,5 @@ Guo Ziniu 1004890
 Zhang Chunjie 1005604
 
 Liang Junyi 1004891
+
+## part 1:

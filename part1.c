@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "csv_to_json.h"
+#include "part1.h"
 
 int num_columns = 0;
 int num_lines = 0;
@@ -33,7 +33,7 @@ char* csv_row_to_json(CsvRow *row) {
 int main(int argc, char *argv[]) {
     /* Check if file name was passed as argument*/
     if (argc != 3) {
-        printf("Input Format: csv_to_json.exe input_file.csv output_file.json\n");
+        printf("Input Format: ./thisFile input_file.csv output_file.json\n");
         return 0;
     }
 
