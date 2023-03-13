@@ -6,6 +6,7 @@
 #include <cmath>
 #include <algorithm>
 #include <regex>
+#include "part3.h"
 
 using namespace std;
 
@@ -24,18 +25,11 @@ vector<string> split(string s, const string& delimiter) {
 }
 
 string removeWhitespace(const string &str) {
-    // Find the first non-whitespace character
     size_t start = str.find_first_not_of(" \t\n\r");
-
-    // If there is no non-whitespace character, return an empty string
     if (start == string::npos) {
         return "";
     }
-
-    // Find the last non-whitespace character
     size_t end = str.find_last_not_of(" \t\n\r");
-
-    // Return the substring between the first and last non-whitespace characters
     return str.substr(start, end - start + 1);
 }
 
@@ -158,10 +152,10 @@ void editCpp(string fileName,vector<string> classNames,
         string splitCpppart2 = cppString.substr(splitClassNameIdx);
         newcppString = splitCpppart1+"\n"+cppMtdStr+"\n"+splitCpppart2;
 
-        /* 5. clear origin content*/
+        /* 2. clear origin content*/
         ofstream file(fileName + ".cpp", ios::trunc);
 
-        /* 6. add new string*/
+        /* 3. add new string*/
         ofstream cpp_file(fileName + ".cpp");
         cpp_file<< newcppString;
     }
