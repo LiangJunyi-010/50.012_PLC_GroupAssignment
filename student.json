@@ -21,6 +21,10 @@
     "Field3": "age",
     "Value3": 30,
     "Field4": "rating",
-    "Value4": 8.88
+    "Value4": 8.88,
+    "Field5": "isRetired",
+    "Value5": true,
+    "IgnoreMe": "Haha please ignore me",
+    "IgnoreMeAlso": "Haha please ignore me also"
   }
 ]

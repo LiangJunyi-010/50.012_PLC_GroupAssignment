@@ -262,7 +262,7 @@ string generate_impl_file(JSONValue inJsonValue, ofstream &header_file, ofstream
     string consInitStr;
     string objInstStr;
     unordered_map<string, JSONValue> jsonMap = inJsonValue.objectValue;
-    int count = 0;
+
     for (std::pair<std::string, JSONValue> element: jsonMap) {
         if (element.first.find("Field") != string::npos) {
             string index = element.first.substr(5);
@@ -288,22 +288,30 @@ string generate_impl_file(JSONValue inJsonValue, ofstream &header_file, ofstream
                     numStr.erase(numStr.find_last_not_of('.') + 1, std::string::npos);
                     objInstStr += (numStr + "f");
                 }
+            } else if (value.type == JSONValueType::Boolean) {
+                /* not needed actually */
+                headerParamStr += ("bool " + element.second.stringValue + ";\n");
+                consParamStr += ("bool " + element.second.stringValue);
+                objInstStr += (to_string(value.booleanValue));
+            } else if (value.type == JSONValueType::Array || value.type == JSONValueType::Object) {
+                /* not needed either , so not implemented*/
+                throw invalid_argument("Unsupported JSON value type: Array");
+            } else {
+                throw invalid_argument(
+                        R"(Unsupported JSON value type. Either "Value" is not supported, or "Value" of corresponding "Field" is missing)");
             }
-            count++;
-            if (count != (jsonMap.size() - 2) / 2) {
-                consParamStr += ", ";
-                objInstStr += ", ";
-            }
-        } else if (element.first.find("Value") != string::npos) {
-            /* ignore */
-        } else if (element.first.find("Class") != string::npos) {
-            /* ignore */
-        } else if (element.first.find("Instance") != string::npos) {
-            /* ignore */
-        } else {
-            cout << "not supported: " << element.first << "!\n";
+            consParamStr += ", ";
+            objInstStr += ", ";
+        } else if ((element.first.find("Value") == string::npos) && (element.first.find("Class") == string::npos) &&
+                   (element.first.find("Instance") == string::npos)) {
+            /* ignore unsupported non-Value/Class/Instance */
+            cout << "Unsupported JSON entry: " << element.first << "! Ignore it...\n";
         }
     }
+
+    consParamStr.erase(consParamStr.length() - 2); // removes last 3 characters
+    objInstStr.erase(objInstStr.length() - 2); // which is ", "
+
     header_file << headerParamStr;
 
     header_file << "public:\n";
