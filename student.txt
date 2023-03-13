@@ -1,0 +1,26 @@
+######
+Student -private
+######
+string get_name () {
+
+if (1) {
+printf("haha\n");
+}
+return this->name;
+}
+
+######
+
+
+Professor -private
+######
+void set_name (string n) {
+this->name = n;
+}
+######
+Student -protected
+######
+float average_gpa(Student s) {
+cout << "Averaging 2 GPAs" << endl;
+return (this->gpa + s.gpa) / 2;
+}

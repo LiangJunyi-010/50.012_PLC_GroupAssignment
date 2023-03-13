@@ -1,3 +1,8 @@
 cmake-build-debug
 CMakeLists.txt
 .idea
+a.out
+csv_to_json
+
+student.cpp
+student.h
